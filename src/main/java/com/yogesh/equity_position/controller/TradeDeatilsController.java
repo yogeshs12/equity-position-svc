@@ -1,4 +1,4 @@
-package com.yogesh.equity_position;
+package com.yogesh.equity_position.controller;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,6 +16,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.yogesh.equity_position.dao.TradeDeatilsRepository;
+import com.yogesh.equity_position.dto.TradeDeatils;
+import com.yogesh.equity_position.dto.CurrentPosition;
 
 @RestController
 @RequestMapping("/api/trades")
@@ -38,7 +42,7 @@ public class TradeDeatilsController {
             t.setSecurityCode(trade.getSecurityCode());
             t.setQuantity(trade.getQuantity());
             t.setOrderType(trade.getOrderType());
-            // set other fields as needed
+            
             return ResponseEntity.ok(repository.save(t));
         } else {
             return ResponseEntity.notFound().build();
@@ -61,42 +65,25 @@ public class TradeDeatilsController {
     }
 
     @GetMapping("/aggregate")
-    public List<SecurityAggregation> getAggregatedQuantityBySecurityCode() {
+    public List<CurrentPosition> getAggregatedQuantityBySecurityCode() {
         List<TradeDeatils> trades = repository.findAll();
-        Map<String, Long> aggregation = new HashMap<>();
+        Map<String, Long> netPositions = new HashMap<>();
+
         for (TradeDeatils trade : trades) {
             long qty = trade.getQuantity();
+            // Subtract quantity for sell trades
             if ("sell".equalsIgnoreCase(trade.getOrderType())) {
                 qty = -qty;
             }
-            aggregation.merge(trade.getSecurityCode(), qty, Long::sum);
+            netPositions.merge(trade.getSecurityCode(), qty, (a,b)-> a+b);
         }
-        List<SecurityAggregation> result = new ArrayList<>();
-        for (Map.Entry<String, Long> entry : aggregation.entrySet()) {
-            result.add(new SecurityAggregation(entry.getKey(), entry.getValue()));
+
+        List<CurrentPosition> positions = new ArrayList<>();
+        for (Map.Entry<String, Long> entry : netPositions.entrySet()) {
+            positions.add(new CurrentPosition(entry.getKey(), entry.getValue()));
         }
-        return result;
+        return positions;
     }
 
-    public static class SecurityAggregation {
-        private String securityCode;
-        private long aggregatedQuantity;
-
-        public SecurityAggregation(String securityCode, long aggregatedQuantity) {
-            this.securityCode = securityCode;
-            this.aggregatedQuantity = aggregatedQuantity;
-        }
-        public String getSecurityCode() {
-            return securityCode;
-        }
-        public void setSecurityCode(String securityCode) {
-            this.securityCode = securityCode;
-        }
-        public long getAggregatedQuantity() {
-            return aggregatedQuantity;
-        }
-        public void setAggregatedQuantity(long aggregatedQuantity) {
-            this.aggregatedQuantity = aggregatedQuantity;
-        }
-    }
+    
 }

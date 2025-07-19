@@ -1,4 +1,4 @@
-package com.yogesh.equity_position;
+package com.yogesh.equity_position.dto;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,9 +15,7 @@ public class TradeDeatils {
     private String securityCode;
     private long quantity;
     private String orderType;
-    // Add more fields as per requirements, e.g. tradeId, account, security, quantity, price, etc.
-
-    // add Getters and setters for remaining
+   
     
 
 
@@ -57,5 +55,5 @@ public class TradeDeatils {
     public void setOrderType(String orderType) {
         this.orderType = orderType;
     }
-    // Add getters and setters for other fields
+    
 }
